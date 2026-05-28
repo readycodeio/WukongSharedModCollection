@@ -1,0 +1,101 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>ReadyM.Api</name>
+    </assembly>
+    <members>
+        <member name="T:System.Runtime.CompilerServices.IsExternalInit">
+            <exclude/>
+        </member>
+        <member name="T:ReadyM.Api.DI.IDependencyContainer">
+            <summary>
+            Dependency injection container interface for registering and resolving services.
+            </summary>
+        </member>
+        <member name="T:ReadyM.Api.DI.IHostedService">
+            <summary>
+            Services that implement this interface will have their <see cref="M:ReadyM.Api.DI.IHostedService.OnScopeStart"/> method called when the DI container is initialized (on game start).
+            This allows them to perform any necessary setup at the appropriate time, such as registering event handlers.
+            The service will be disposed when the game shuts down, allowing for any necessary cleanup.
+            </summary>
+        </member>
+        <member name="M:ReadyM.Api.DI.IHostedService.OnScopeStart">
+            <summary>
+            Called when the DI container is initialized (on game start).
+            This allows the service to perform any necessary setup at the appropriate time, such as registering event handlers.
+            </summary>
+        </member>
+        <member name="M:ReadyM.Api.ECS.Worlds.Store.ComponentIndex``2">
+            <summary>
+            Returns the index for indexed components to search entities with a specific component value in O(1).<br/>
+            Executes in O(1). 
+            </summary>
+        </member>
+        <member name="M:ReadyM.Api.ECS.Worlds.Store.LinkComponentIndex``1">
+            <summary>
+            Returns the index for link components to search entities with a specific entity in O(1).<br/>
+            Executes in O(1). 
+            </summary>
+        </member>
+        <member name="T:ReadyM.Api.Idents.AreaId">
+            <summary>
+            Identifies an area within the game world.
+            Areas can be main Chapter maps, sub-areas such as the Zodiac Village, or hidden boss arenas.
+            If going somewhere requires a loading screen, it's probably a different area.
+            </summary>
+            <param name="id">The underlying ID value. This is not guaranteed to be stable across game versions, and should not be used for anything other than debugging or logging purposes.</param>
+        </member>
+        <member name="M:ReadyM.Api.Idents.AreaId.#ctor(System.UInt16)">
+            <summary>
+            Identifies an area within the game world.
+            Areas can be main Chapter maps, sub-areas such as the Zodiac Village, or hidden boss arenas.
+            If going somewhere requires a loading screen, it's probably a different area.
+            </summary>
+            <param name="id">The underlying ID value. This is not guaranteed to be stable across game versions, and should not be used for anything other than debugging or logging purposes.</param>
+        </member>
+        <member name="M:ReadyM.Api.Idents.AreaId.TextDeserialize(System.Text.Json.Utf8JsonReader@,System.Text.Json.JsonSerializerOptions)">
+            <exclude />
+        </member>
+        <member name="M:ReadyM.Api.Idents.AreaId.TextSerialize(System.Text.Json.Utf8JsonWriter,ReadyM.Api.Idents.AreaId,System.Text.Json.JsonSerializerOptions)">
+            <exclude />
+        </member>
+        <member name="T:ReadyM.Api.Idents.PlayerId">
+            <summary>
+            A unique identifier for a player in the current session.
+            This is not a persistent identifier and can change over time, especially if players disconnect and reconnect.
+            It should be used for identifying players during the current session, but not for long-term storage or cross-session identification.
+            </summary>
+        </member>
+        <member name="P:ReadyM.Api.Idents.PlayerId.Server">
+            <summary>
+            The PlayerId representing the server itself.
+            This can be used to identify actions or messages that originate from the server rather than any specific player.
+            </summary>
+        </member>
+        <member name="P:ReadyM.Api.Idents.PlayerId.Invalid">
+            <summary>
+            An invalid PlayerId, which can be used to represent the absence of a player or an uninitialized state.
+            </summary>
+        </member>
+        <member name="M:ReadyM.Api.Idents.PlayerId.TextDeserialize(System.Text.Json.Utf8JsonReader@,System.Text.Json.JsonSerializerOptions)">
+            <exclude />
+        </member>
+        <member name="M:ReadyM.Api.Idents.PlayerId.TextSerialize(System.Text.Json.Utf8JsonWriter,ReadyM.Api.Idents.PlayerId,System.Text.Json.JsonSerializerOptions)">
+            <exclude />
+        </member>
+        <member name="T:ReadyM.Api.Serialization.DeriveJsonSerializableAttribute">
+            <exclude />
+        </member>
+        <member name="M:ReadyM.Api.Serialization.DeriveJsonSerializableAttribute.#ctor(ReadyM.Api.Serialization.SerializableMode)">
+            <exclude />
+        </member>
+        <member name="T:ReadyM.Api.Serialization.IDeltaEquatable`1">
+            <exclude />
+        </member>
+        <member name="T:ReadyM.Api.Serialization.SerializableMode">
+            <summary>
+            Defines how a struct should be serialized when using <see cref="!:DeriveINetSerializableAttribute"/>.
+            </summary>
+        </member>
+    </members>
+</doc>

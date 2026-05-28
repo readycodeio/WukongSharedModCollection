@@ -1,0 +1,13 @@
+{
+  "uniqueId": "KralPolska.UtilityPatches",
+  "version": "1.0.0",
+  "name": "Utility Patches",
+  "author": "KralPolska",
+  "description": "A collection of utility patches for the game.",
+  "dependencies": [
+    {
+      "uniqueId": "WukongMp.Sdk",
+      "minimumVersion": "0.2.1"
+    }
+  ]
+}

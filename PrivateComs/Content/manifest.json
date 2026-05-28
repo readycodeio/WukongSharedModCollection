@@ -1,0 +1,17 @@
+{
+  "uniqueId": "KralPolska.PrivateComs",
+  "version": "1.0.0",
+  "name": "PrivateComs",
+  "author": "KralPolska",
+  "description": "Simple private communication mod that allows messaging only specified players.",
+  "dependencies": [
+    {
+      "uniqueId": "WukongMp.Sdk",
+      "minimumVersion": "0.2.1"
+    },
+    {
+      "uniqueId": "KralPolska.UtilityPatches",
+      "minimumVersion": "1.0.0"
+    }
+  ]
+}
