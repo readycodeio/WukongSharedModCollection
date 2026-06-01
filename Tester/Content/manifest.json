@@ -1,9 +1,9 @@
 {
-  "uniqueId": "ExampleMod",
+  "uniqueId": "WukongMp.TesterSpace",
   "version": "1.0.0",
-  "name": "CHANGE ME",
-  "author": "CHANGE ME",
-  "description": "CHANGE ME",
+  "name": "TesterSpace",
+  "author": "WukongMp",
+  "description": "Workspace for testing purposes",
   "dependencies": [
     {
       "uniqueId": "WukongMp.Sdk",
