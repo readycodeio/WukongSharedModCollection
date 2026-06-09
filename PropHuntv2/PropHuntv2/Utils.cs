@@ -1,10 +1,20 @@
-﻿using ReadyM.Api.Idents;
+﻿using b1;
+using HarmonyLib;
+using ReadyM.Api.Idents;
+using ReadyM.Wukong.Common.ECS.Components;
+using ReadyM.Wukong.Common.ECS.Values;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
+using UnrealEngine.AIModule;
+using UnrealEngine.AssetRegistry;
 using UnrealEngine.Engine;
 using UnrealEngine.Runtime;
+using UnrealEngine.UMG;
 using WukongMp.Api;
 using WukongMp.Api.WukongUtils;
 using WukongMp.Sdk.Api;
@@ -21,52 +31,27 @@ public static class Utils
         myActor = GetCharacterActor(localCharacter);
         return myActor;
     }
-    public static void GetWorld()
-    {
-        Mod.World = GameUtils.GetWorld();
-    }
+
     public static string[] propClassNames = new string[]
     {
-            "BP_yaocai_biou_C",
-            "BP_yaocai_gancao_C",
-            "BP_Yaocai_MuJinHua_C",
-            "BP_yaocai_tujun_C",
-            "BPO_TreasureBox_03a_C",
+            //"BP_yaocai_biou_C",
+            //"BP_yaocai_gancao_C",
+            //"BP_Yaocai_MuJinHua_C",
+            //"BP_yaocai_tujun_C",
+            //"BPO_TreasureBox_03a_C",
             "BPO_TreasureBox_04a_C",
             "BPO_TreasureBox_06_C",
             "BPO_TreasureBox_07a_C",
             "BPO_TreasureBox_08_C",
             "BPO_TreasureBox_Coffin_01_C",
-            "BPO_TreasureBox_fsc_C",
+            //"BPO_TreasureBox_fsc_C",
             "BPO_TreasureBox_JiaSi_07a_C",
-            "HFS_Destructible_HuoPen_C",
-            "HFS_Destructible_ShuiGang_C",
-            "HFS_Destructible_ShuiGang_droppable_C",
-            "HFS_Tudipo_Yun_C"
+            //"HFS_Destructible_HuoPen_C",
+            //"HFS_Destructible_ShuiGang_C",
+            //"HFS_Destructible_ShuiGang_droppable_C",
+            //"HFS_Tudipo_Yun_C"
     };
-    public static AActor? SpawnRandomProp(FVector location, FRotator rotation)
-    {
-        Random random = new Random();
-        int index = random.Next(propClassNames.Length);
-        string propClassName = propClassNames[index];
-        return SpawnProp(propClassName, location, rotation);
-    }
-    public static AActor? SpawnRandomProp(FVector location, FRotator rotation, AActor actorToIgnore, bool enableCollision = false)
-    {
-        Random random = new Random();
-        int index = random.Next(propClassNames.Length);
-        string propClassName = propClassNames[index];
-        return SpawnProp(propClassName, location, rotation, actorToIgnore, enableCollision);
-    }
-    public static AActor? SpawnProp(string propClassName, FVector location, FRotator rotation)
-    {
-        AActor? prop = SpawnActor(propClassName, location, rotation);
-        if (prop == null)
-        {
-            WukongApi.Chat.ShowLocalMessage("Failed to spawn prop: " + propClassName, FLinearColor.Red);
-        }
-        return prop;
-    }
+
     public static AActor? SpawnProp(string propClassName, FVector location, FRotator rotation, AActor actorToIgnore, bool enableCollision = false)
     {
         var startLocation = location;
@@ -175,9 +160,39 @@ public static class Utils
         }
         return null;
     }
-    public static void test()
-    {
-        AActor actor = new AActor();
-        USoundBase sound = new();
-    }
+
+    //public static void test()
+    //{
+    //    AActor actor = new AActor();
+    //    var pawn = WukongApi.Sync.LocalMainCharacter!.Value.Pawn;
+
+    //    actor.DisableInput(GameUtils.GetPlayerController());
+
+    //    //UTextBlock textBlock = new UTextBlock();
+    //    //textBlock.SetText("abc");
+
+    //    UGridPanel panel = new UGridPanel();
+
+    //    BUS_PlayerInputActionComp bus = new BUS_PlayerInputActionComp();
+
+    //    USoundBase sound = new();
+    //    AIController controller = new AIController();
+    //    BGU_CharacterAI ai = new BGU_CharacterAI();
+    //    UGameplayStatics.GetObjects<USoundBase>(EObjectFlags.NoFlags, true, EInternalObjectFlags.None).Current.GetType().Name.ToLower();
+    //    var registry = UAssetRegistryHelpers.GetAssetRegistry();
+
+    //    //var myPawn = GameUtils.GetControlledPawn();
+    //    //var playerComponent = EcsExtensions.GetComponent<MainCharacterComponent>(myPawn);
+    //    //var currentEq = playerComponent.Equipment;
+    //    //var weaponId = currentEq.GetItem(EquipPosition.Weapon);
+    //    //playerComponent.Equipment.WithSetItem(EquipPosition.Weapon, weaponId + 1);
+
+    //    //var myPawn = GameUtils.GetControlledPawn();
+
+    //    //pawn = WukongApi.Sync.LocalMainCharacter?.Pawn;
+    //    //BGUActorBaseCS actor = new BGUActorBaseCS();
+
+    //    //var playerComponent = EcsExtensions.GetComponent<MainCharacterComponent>(pawn);
+
+    //}
 }

@@ -1,4 +1,5 @@
-﻿using CSharpModBase.Input;
+﻿using b1;
+using CSharpModBase.Input;
 using ReadyM.Api.Command;
 using ReadyM.Api.Idents;
 using ReadyM.Wukong.Common.ECS.Components;
@@ -6,10 +7,14 @@ using ReadyM.Wukong.Common.ECS.Values;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.IO;
 using System.Linq;
+using System.Text;
+using UnrealEngine.AssetRegistry;
 using UnrealEngine.Engine;
 using UnrealEngine.Runtime;
 using WukongMp.Api;
+using WukongMp.Api.WukongUtils;
 using WukongMp.Sdk.Api;
 using WukongMp.Sdk.Entities;
 
@@ -21,6 +26,13 @@ public class PropHuntGameMode : GameModeBase
     private static readonly List<int> _timeChecks = [60, 30, 10, 5, 3, 2, 1];
     public Queue<int> RemainingTimeChecks = new Queue<int>(_timeChecks);
 
+    private float _currentRotation = 0f;
+    private const float ROTATION_STEP = 5f;
+
+    //public List<FAssetData> _testSoundAssets = new List<FAssetData>();
+    //public int _currentSoundIndex = 0;
+    //public float _soundTimer = 0f;
+    //public bool _isSoundTestActive = false;
 
     public override void Update(float deltaTime)
     {
@@ -33,6 +45,18 @@ public class PropHuntGameMode : GameModeBase
         {
             GameState.HasPreparationEnded = true;
             Mod.Rpc?.SendSeekersStart();
+        }
+
+        foreach (var player in WukongApi.Sync.AllMainCharacters)
+        {
+            if (player.Hp <= 0f)
+            {
+                if (GameState.Hiders.Contains(player.PlayerId))
+                {
+                    GameState.Hiders.Remove(player.PlayerId);
+                    Mod.Rpc?.SendPlayerFound(player.PlayerId);
+                }
+            }
         }
 
         if (GameState.Hiders.Count == 0)
@@ -58,7 +82,29 @@ public class PropHuntGameMode : GameModeBase
 
     public override void ClientUpdate(float deltaTime)
     {
+        //if (_isSoundTestActive && _testSoundAssets.Count > 0)
+        //{
+        //    _soundTimer += deltaTime;
+
+        //    if (_soundTimer >= 1.0f)
+        //    {
+        //        _soundTimer = 0f;
+        //        PlayNextTestSound();
+        //    }
+        //}
         if (!GameState.IsGameActive || WukongApi.Sync.LocalPlayerId is not { } myId) return;
+
+        GameState.ElapsedTranformTime += deltaTime;
+
+        if (GameState.ElapsedTranformTime >= GameState.TransformDownTime)
+        {
+            GameState.CanPerformTransform = true;
+        }
+        else
+        {
+            GameState.CanPerformTransform = false;
+        }
+        
 
         if (!GameState.HasPreparationEnded && GameState.Seekers.Contains(myId))
         {
@@ -72,10 +118,61 @@ public class PropHuntGameMode : GameModeBase
             }
         }
     }
+    //private void PlayNextTestSound()
+    //{
+    //    if (_currentSoundIndex >= _testSoundAssets.Count)
+    //    {
+    //        _isSoundTestActive = false;
+    //        WukongApi.Chat.ShowLocalMessage("Stopped playing", FLinearColor.Yellow);
+    //        return;
+    //    }
+
+    //    var assetData = _testSoundAssets[_currentSoundIndex];
+    //    string assetName = UAssetRegistryHelpers.GetFullName(assetData);
+    //    _currentSoundIndex++;
+
+    //    try
+    //    {
+    //        UObject loadedObject = UAssetRegistryHelpers.GetAsset(assetData);
+
+    //        if (loadedObject is USoundBase mySound)
+    //        {
+    //            WukongApi.Chat.ShowLocalMessage($"Playing [{_currentSoundIndex}/{_testSoundAssets.Count}] {assetName}",FLinearColor.AliceBlue);
+
+    //            AActor? myActor = Utils.GetMyPlayer();
+    //            if (myActor != null)
+    //            {
+    //                UGameplayStatics.PlaySoundAtLocation(
+    //                    GameUtils.GetWorld(),
+    //                    mySound,
+    //                    myActor.GetActorLocation(),
+    //                    FRotator.ZeroRotator,
+    //                    5.0f, 1.0f, 0.0f,
+    //                    null, null, myActor, null
+    //                );
+    //            }
+    //            //else
+    //            //{
+    //            //    WukongApi.Chat.ShowLocalMessage("No actor found",FLinearColor.Red);
+    //            //}
+    //        }
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        WukongApi.Console.LogMessage($"Error {assetName} {ex.Message}");
+    //    }
+    //}
 
     public override void OnStart()
     {
         if (!WukongApi.Sync.IsMasterClient) return;
+
+        int playerCount = WukongApi.Sync.AllMainCharacters.Count();
+        if (playerCount < 2)
+        {
+            WukongApi.Chat.ShowLocalMessage($"Unable to start the game: Not enough players! Min:2, Current: {playerCount}", FLinearColor.Red);
+            return;
+        }
 
         GameState.Reset();
         RollTeams(Core.Config.CustomTeams);
@@ -100,8 +197,9 @@ public class PropHuntGameMode : GameModeBase
             default:
                 break;
         }
-        WukongApi.Local.ShowInfoMessage($"Seekers: {GameState.SeekersScore} | Hiders: {GameState.HidersScore}");
+        WukongApi.Widgets.ShowInfoMessage($"Seekers: {GameState.SeekersScore} | Hiders: {GameState.HidersScore}");
         GameState.IsGameActive = false;
+
         GameState.RebirthPlayers();
     }
 
@@ -115,14 +213,268 @@ public class PropHuntGameMode : GameModeBase
         }
     }
 
-    public void RegisterCommands()
+    public void RegisterBinds()
     {
-        WukongApi.Console.AddCommand("prop", ConsoleCommand.Create(ManageGame), ["Start", "Pause", "End"]);
-        WukongApi.Console.AddCommand("propConfig", ConsoleCommand.Create(CommandConfigGame), ConfigAutoParams);
-        WukongApi.Console.AddCommand("test", ConsoleCommand.Create(SpawnTestingProp));
+        WukongApi.Input.RegisterKeyBind(Key.RIGHT, BindRotatePropRight);
+        WukongApi.Input.RegisterKeyBind(Key.LEFT, BindRotatePropLeft);
+        WukongApi.Input.RegisterKeyBind(ModifierKeys.Shift, Key.O, BindRerollProp);
     }
 
-    private void ManageGame(string command)
+    private void BindRerollProp()
+    {
+        if (GameState.CanPerformTransform)
+        {
+            GameState.ElapsedTranformTime = 0f;
+            Random random = new Random();
+            string newPropName = Utils.propClassNames[random.Next(Utils.propClassNames.Length)];
+            Mod.Rpc?.SendPlayerHide(WukongApi.Sync.LocalPlayerId.Value, newPropName);
+            WukongApi.Local.ShowTip($"You are: {newPropName}", true);
+        }
+        else
+        {
+            WukongApi.Local.ShowTip($"Time until next transform: {GameState.TransformDownTime - GameState.ElapsedTranformTime}", true);
+        }
+    }
+
+    private void BindRotatePropLeft()
+    {
+        if (WukongApi.Input.CanApplyInput())
+        {
+            RotateProp(-ROTATION_STEP);
+        }
+    }
+
+    private void BindRotatePropRight()
+    {
+        if (WukongApi.Input.CanApplyInput())
+        {
+            RotateProp(ROTATION_STEP);
+        }
+    }
+
+    private void RotateProp(float angleDelta)
+    {
+        if (!GameState.Hiders.Contains(WukongApi.Sync.LocalPlayerId.Value)) return;
+
+        if (GameState.PlayerProps.TryGetValue(WukongApi.Sync.LocalPlayerId.Value, out var myProp) && myProp != null)
+        {
+            _currentRotation += angleDelta;
+
+            if (_currentRotation >= 360f) _currentRotation -= 360f;
+            if (_currentRotation < 0f) _currentRotation += 360f;
+
+            FRotator newRotation = new FRotator(0f, _currentRotation, 0f);
+
+            myProp.SetActorRelativeRotation(newRotation, false, out _, false);
+
+            Mod.Rpc?.SendPropRotate(_currentRotation);
+        }
+    }
+    public void RegisterCommands()
+    {
+        WukongApi.Console.AddCommand("prop", ConsoleCommand.Create(CommandManageGame), ["Start", "Pause", "End"]);
+        WukongApi.Console.AddCommand("propConfig", ConsoleCommand.Create(CommandConfigGame), ConfigAutoParams);
+        WukongApi.Console.AddCommand("test", ConsoleCommand.Create(SpawnTestingProp));
+        //WukongApi.Console.AddCommand("testt", ConsoleCommand.Create(() =>
+        //{
+        //    try
+        //    {
+        //var objects = UGameplayStatics.GetObjects<USoundWave>(EObjectFlags.NoFlags, true, EInternalObjectFlags.None);
+
+        //USoundBase? o = null;
+
+        //foreach (var obj in objects)
+        //{
+        //    if (obj != null && !obj.PathName.Contains("Default__") && !obj.PathName.StartsWith("/Script/"))
+        //    {
+        //        o = obj;
+        //        break;
+        //    }
+        //}
+        //USoundWave? o = null;
+        //while (objects.MoveNext())
+        //{
+        //    var obj = objects.Current;
+        //    if (obj == null)
+        //        continue;
+        //    if (obj.PathName.Contains("Default__"))
+        //        continue;
+        //    if (obj.PathName.StartsWith("/scripts/"))
+        //        continue;
+
+        //    o = obj;
+        //    break;
+        //}
+
+        //int count = 0;
+        //while (objects.MoveNext() && count < 10)
+        //{
+        //    var obj = objects.Current;
+        //    if (obj != null)
+        //    {
+        //        WukongApi.Chat.ShowLocalMessage($"{obj.PathName}", FLinearColor.Yellow);
+        //        count++;
+        //    }
+        //}
+
+        //if (o == null)
+        //{
+        //    WukongApi.Chat.ShowLocalMessage("Not found", FLinearColor.Red);
+        //    return;
+        //}
+
+        //WukongApi.Chat.ShowLocalMessage($"{o?.GetType().Name}", FLinearColor.AliceBlue);
+        //WukongApi.Chat.ShowLocalMessage($"{o?.GetType().FullName}", FLinearColor.AliceBlue);
+        //WukongApi.Chat.ShowLocalMessage($"{o?.PathName}", FLinearColor.AliceBlue);
+        //IAssetRegistry assetRegistry = UAssetRegistryHelpers.GetAssetRegistry();
+
+        //List<FAssetData> assetDataList = new List<FAssetData>();
+
+        //assetRegistry.GetAssetsByClass(new FName("SoundBase"), out assetDataList, true);
+
+        //int znalezione = 0;
+
+        //foreach (var assetData in assetDataList)
+        //{
+        //    string assetName = UAssetRegistryHelpers.GetFullName(assetData);
+
+        //    if (!assetName.Contains("Default__") && !assetName.StartsWith("/Script/"))
+        //    {
+        //        WukongApi.Console.LogMessage($"Znaleziono SoundBase: {assetName}");
+        //        znalezione++;
+
+        //        if (znalezione >= 10)
+        //        {
+        //            break;
+        //        }
+        //    }
+        //}
+
+        //if (znalezione == 0)
+        //{
+        //    WukongApi.Chat.ShowLocalMessage("Empty", FLinearColor.Rdd);
+        //}
+        //foreach (var assetData in assetDataList)
+        //{
+        //    string assetName = UAssetRegistryHelpers.GetFullName(assetData);
+
+        //    if (assetName.ToLower().Contains("gong") && !assetName.Contains("Default__"))
+        //    {
+        //        UObject loadedObject = UAssetRegistryHelpers.GetAsset(assetData);
+
+        //        if (loadedObject is USoundBase mySound)
+        //        {
+        //            WukongApi.Chat.ShowLocalMessage($"{assetName}", FLinearColor.Green);
+
+        //UGameplayStatics.PlaySoundAtLocation(
+        //        GameUtils.GetWorld(),
+        //        mySound,
+        //        WukongApi.Sync.LocalMainCharacter.Value.Location.ToFVector(),
+        //        FRotator.ZeroRotator,
+        //        1.0f,
+        //        1.0f,
+        //        0.0f,
+        //        null,
+        //        null,
+        //        Utils.GetCharacterActor(WukongApi.Sync.LocalMainCharacter.Value),
+        //        null
+        //    );
+        //            break;
+        //        }
+        //    }
+        //}
+
+        //        IAssetRegistry assetRegistry = UAssetRegistryHelpers.GetAssetRegistry();
+        //        List<FAssetData> assetDataList = new List<FAssetData>();
+
+        //        assetRegistry.GetAssetsByClass(new FName("SoundWave"), out assetDataList, true);
+
+        //        USoundBase? soundToPlay = null;
+
+        //        foreach (var assetData in assetDataList)
+        //        {
+        //            string assetName = UAssetRegistryHelpers.GetFullName(assetData);
+
+        //            if (assetName.ToLower().Contains("ui") || assetName.ToLower().Contains("beep") || assetName.ToLower().Contains("warn"))
+        //            {
+        //                UObject loadedObject = UAssetRegistryHelpers.GetAsset(assetData);
+
+        //                if (loadedObject is USoundBase mySound)
+        //                {
+        //                    soundToPlay = mySound;
+        //                    WukongApi.Console.LogMessage($"Zaladowano dzwiek odliczania: {assetName}");
+        //                    break;
+        //                }
+        //            }
+        //        }
+
+        //        if (soundToPlay != null)
+        //        {
+        //            AActor? myActor = Utils.GetMyPlayer();
+        //            if (myActor != null)
+        //            {
+        //                UGameplayStatics.PlaySoundAtLocation(
+        //                    GameUtils.GetWorld(),
+        //                    soundToPlay,
+        //                    myActor.GetActorLocation(),
+        //                    FRotator.ZeroRotator,
+        //                    1.0f, 1.0f, 0.0f,
+        //                    null, null, myActor, null
+        //                );
+        //            }
+        //        }
+
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        WukongApi.Chat.ShowLocalMessage(ex.Message, FLinearColor.Red);
+        //    }
+        //}));
+        //WukongApi.Console.AddCommand("tsound", ConsoleCommand.Create(() =>
+        //{
+        //    if (_isSoundTestActive)
+        //    {
+        //        _isSoundTestActive = false;
+        //        WukongApi.Chat.ShowLocalMessage("Test stopped", FLinearColor.Yellow);
+        //        return;
+        //    }
+
+        //    _testSoundAssets.Clear();
+
+        //    IAssetRegistry assetRegistry = UAssetRegistryHelpers.GetAssetRegistry();
+        //    List<FAssetData> allSounds = new List<FAssetData>();
+
+        //    assetRegistry.GetAssetsByClass(new FName("SoundWave"), out allSounds, true);
+
+        //    int added = 0;
+        //foreach (var asset in allSounds)
+        //{
+        //    string name = UAssetRegistryHelpers.GetFullName(asset).ToLower();
+
+        //    if (!name.Contains("default__") && !name.StartsWith("/script/"))
+        //    {
+        //        _testSoundAssets.Add(asset);
+        //        added++;
+
+        //        if (added >= 10) break;
+        //    }
+        //}
+
+        //    if (_testSoundAssets.Count > 0)
+        //    {
+        //        _currentSoundIndex = 0;
+        //        _soundTimer = 0f;
+        //        _isSoundTestActive = true;
+        //        WukongApi.Chat.ShowLocalMessage($"{_testSoundAssets.Count}", FLinearColor.Green);
+        //    }
+        //    else
+        //    {
+        //        WukongApi.Chat.ShowLocalMessage("Brak", FLinearColor.Red);
+        //    }
+        //}));
+    }
+
+    private void CommandManageGame(string command)
     {
         string option = command.ToLower();
 
@@ -170,8 +522,8 @@ public class PropHuntGameMode : GameModeBase
 
         int maxAllowedSeekers = Math.Max(1, allPlayers.Count / 2);
 
-        int minSeekers = Math.Min(Core.Config.MinHunter, maxAllowedSeekers);
-        int maxSeekers = Math.Min(Core.Config.MaxHunter, maxAllowedSeekers);
+        int minSeekers = Math.Min(Core.Config.MinHunterCount, maxAllowedSeekers);
+        int maxSeekers = Math.Min(Core.Config.MaxHunterCount, maxAllowedSeekers);
 
         int targetSeekersCount = rand.Next(minSeekers, maxSeekers + 1);
 
@@ -204,7 +556,7 @@ public class PropHuntGameMode : GameModeBase
         }
 
         WukongApi.Chat.SendServerMessage("Game forcibly ended by host!");
-        OnEnd(Core.Team.Spectator);
+        OnEnd(Core.Team.None);
     }
 
     private void CommandConfigGame(string option, int value)
@@ -232,10 +584,10 @@ public class PropHuntGameMode : GameModeBase
                 Core.Config.MaxSeekerHp = value;
                 break;
             case "maxhunter":
-                Core.Config.MaxHunter = value;
+                Core.Config.MaxHunterCount = value;
                 break;
             case "minhunter":
-                Core.Config.MinHunter = value;
+                Core.Config.MinHunterCount = value;
                 break;
             case "preparationtime":
                 Core.Config.PreparationTime = value;
@@ -246,6 +598,10 @@ public class PropHuntGameMode : GameModeBase
             case "customteams":
                 if (value > 0) Core.Config.CustomTeams = true;
                 else Core.Config.CustomTeams = false;
+                break;
+            case "destroytamers":
+                if (value > 0) Core.Config.DestroyTamers = true;
+                else Core.Config.DestroyTamers = false;
                 break;
             default:
                 WukongApi.Console.LogMessage("Invalid argument " + option);

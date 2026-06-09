@@ -12,6 +12,8 @@ using WukongMp.Api.WukongUtils;
 using ReadyM.Wukong.Common.ECS.Values;
 using UnrealEngine.Plugins.ControlRig;
 using LiteNetLib;
+using UnrealEngine.Runtime;
+using b1;
 
 namespace WukongMp.PropHunt;
 
@@ -31,6 +33,7 @@ public sealed class PropHuntService : IHostedService
         {
             WukongApi.PvP.InitializeAreaPvpState();
         }
+        WukongApi.Configuration.IsSupportMultiLockEnabled = false;        
     }
 
     //private void OnPlayerConnected(ReadyMainCharacter character)
@@ -77,6 +80,8 @@ public sealed class PropHuntService : IHostedService
 
     private void OnPlayerFound(ReadyMainCharacter character, ReadyCharacter? nullable)
     {
+        WukongApi.Chat.ShowLocalMessage("event strzelił", FLinearColor.Yellow);
+
         if (!WukongApi.Sync.IsMasterClient || !GameState.IsGameActive)
         {
             return;
@@ -90,13 +95,16 @@ public sealed class PropHuntService : IHostedService
 
     private void OnPlayerDisconnected(PlayerId id, DisconnectReason reason)
     {
-        if (!WukongApi.Sync.IsMasterClient)
-        {
-            return;
-        }
-
         if (GameState.Seekers.Contains(id)) GameState.Seekers.Remove(id);
-        else if (GameState.Hiders.Contains(id)) GameState.Hiders.Remove(id);
+        else if (GameState.Hiders.Contains(id))
+        { 
+            GameState.Hiders.Remove(id);
+            if (GameState.PlayerProps.ContainsKey(id))
+            {
+                GameState.PlayerProps[id].DestroyActor();
+                GameState.PlayerProps.Remove(id);
+            }
+        }
         else if (GameState.Spectators.Contains(id)) GameState.Spectators.Remove(id);
     }
 

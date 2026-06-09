@@ -2,10 +2,8 @@
 
 public abstract class GameModeBase
 {
-    public virtual void Update(float deltaTime) { }
-    public virtual void ClientUpdate(float deltaTime) { }
-
-    public virtual void OnStart() { }
-
-    public virtual void OnEnd(Core.Team winnerTeam) { }
+    public abstract void Update(float deltaTime);
+    public abstract void ClientUpdate(float deltaTime);
+    public abstract void OnStart();
+    public abstract void OnEnd(Core.Team winnerTeam);
 }

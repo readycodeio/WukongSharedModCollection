@@ -1,4 +1,5 @@
-﻿using ReadyM.Api.Idents;
+﻿using BtlB1;
+using ReadyM.Api.Idents;
 using System.Collections.Generic;
 using System.Linq;
 using UnrealEngine.Engine;
@@ -13,7 +14,10 @@ public static class GameState
     public static bool IsGameActive { get; set; } = false;
     public static bool HasPreparationEnded { get; set; } = false;
     public static bool HasPlayerJoinedLate { get; set; } = false;
+    public static bool CanPerformTransform { get; set; } = true;
     public static float ElapsedRoundTime { get; set; } = 0f;
+    public static float ElapsedTranformTime { get; set; } = 0f;
+    public static readonly float TransformDownTime = 30f;
     public static int CurrentRound { get; set; } = 0;
 
     public static int HidersScore { get; set; } = 0;
@@ -24,6 +28,7 @@ public static class GameState
     public static HashSet<PlayerId> Spectators { get; set; } = [];
 
     public static Dictionary<PlayerId, AActor> PlayerProps { get; set; } = [];
+    //public static Dictionary<PlayerId, List<AActor>> PlayerDecoys { get; set; } = [];
     public static Dictionary<PlayerId, ReadyMainCharacter> PlayerCharacters { get; set; } = [];
     public static Dictionary<PlayerId, AActor> PlayerActors { get; set; } = [];
 

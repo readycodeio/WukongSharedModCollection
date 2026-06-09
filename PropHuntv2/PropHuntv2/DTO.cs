@@ -11,24 +11,37 @@ public partial struct GameConfig : INetSerializable
 {
     public int MaxHiderHp;
     public int MaxSeekerHp;
-    public int MaxHunter;
-    public int MinHunter;
+
+    public int MaxHunterCount;
+    public int MinHunterCount;
+
+    public int MaxHiderDecoys;
+    public int MaxHiderPermaDecoys;
+
     public float PreparationTime;
     public float GameTime;
     public bool CustomTeams;
+    public bool DestroyTamers;
 
     public GameConfig()
     {
-        MaxHiderHp = 100;
-        MaxSeekerHp = 100;
-        MaxHunter = 2;
-        MinHunter = 1;
-        PreparationTime = 5f;
-        GameTime = 70f;
-        CustomTeams = false;
+        this.MaxHiderHp = 100;
+        this.MaxSeekerHp = 100;
+
+        this.MaxHunterCount = 2;
+        this.MinHunterCount = 1;
+
+        this.MaxHiderDecoys = 3;
+        this.MaxHiderPermaDecoys = 1;
+        
+        this.PreparationTime = 5f;
+        this.GameTime = 70f;
+        this.CustomTeams = false;
+        this.DestroyTamers = true;
     }
 
     public static GameConfig Default => new GameConfig();
+
 }
 
 [DeriveINetSerializable]
@@ -47,15 +60,15 @@ public partial struct GameStateSnapshot : INetSerializable
 
     public GameStateSnapshot()
     {
-        IsGameActive = false;
-        HasPreparationEnded = false;
-        ElapsedRoundTime = 0f;
-        CurrentRound = 0;
-        HidersScore = 0;
-        SeekersScore = 0;
+        this.IsGameActive = false;
+        this.HasPreparationEnded = false;
+        this.ElapsedRoundTime = 0f;
+        this.CurrentRound = 0;
+        this.HidersScore = 0;
+        this.SeekersScore = 0;
 
-        Seekers = "";
-        Hiders= "";
-        Spectators = "";
+        this.Seekers = "";
+        this.Hiders= "";
+        this.Spectators = "";
     }
 }
