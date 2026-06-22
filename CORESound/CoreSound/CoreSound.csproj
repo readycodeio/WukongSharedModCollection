@@ -1,0 +1,87 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <LangVersion>14</LangVersion>
+        <OutputType>Library</OutputType>
+        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+        <Platforms>AnyCPU</Platforms>
+        <Configurations>Debug;Release</Configurations>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Reference Include="0Harmony">
+            <HintPath>..\Dependencies\Loader\0Harmony.dll</HintPath>
+        </Reference>
+        <Reference Include="b1.Managed">
+          <HintPath>..\..\PropHuntv2\Dependencies\Game\b1.Managed.dll</HintPath>
+        </Reference>
+        <Reference Include="b1.Native">
+          <HintPath>..\..\PropHuntv2\Dependencies\Game\b1.Native.dll</HintPath>
+        </Reference>
+        <Reference Include="b1.NativePlugins">
+          <HintPath>..\..\PropHuntv2\Dependencies\Game\b1.NativePlugins.dll</HintPath>
+        </Reference>
+        <Reference Include="B1UI_GSE.Script">
+          <HintPath>..\..\PropHuntv2\Dependencies\Game\B1UI_GSE.Script.dll</HintPath>
+        </Reference>
+        <Reference Include="BtlSvr.Main">
+          <HintPath>..\..\PropHuntv2\Dependencies\Game\BtlSvr.Main.dll</HintPath>
+        </Reference>
+        <Reference Include="CSharpModBase">
+          <HintPath>..\Dependencies\Loader\CSharpModBase.dll</HintPath>
+        </Reference>
+        <Reference Include="GSE.Core">
+          <HintPath>..\..\PropHuntv2\Dependencies\Game\GSE.Core.dll</HintPath>
+        </Reference>
+        <Reference Include="GSE.GSNet">
+          <HintPath>..\..\PropHuntv2\Dependencies\Game\GSE.GSNet.dll</HintPath>
+        </Reference>
+        <Reference Include="GSE.GSSdk">
+          <HintPath>..\..\PropHuntv2\Dependencies\Game\GSE.GSSdk.dll</HintPath>
+        </Reference>
+        <Reference Include="GSE.OnlineBase">
+          <HintPath>..\..\PropHuntv2\Dependencies\Game\GSE.OnlineBase.dll</HintPath>
+        </Reference>
+        <Reference Include="GSE.ProtobufDB">
+          <HintPath>..\..\PropHuntv2\Dependencies\Game\GSE.ProtobufDB.dll</HintPath>
+        </Reference>
+        <Reference Include="LiteNetLib">
+          <HintPath>..\Dependencies\Loader\LiteNetLib.dll</HintPath>
+        </Reference>
+        <Reference Include="PreludeLib">
+            <HintPath>..\Dependencies\SDK\PreludeLib.dll</HintPath>
+        </Reference>
+        <Reference Include="ReadyM.Api">
+            <HintPath>..\Dependencies\SDK\ReadyM.Api.dll</HintPath>
+        </Reference>
+        <Analyzer Include="..\Dependencies\SDK\ReadyM.Api.Generators.dll" />
+        <Reference Include="ReadyM.Api.Multiplayer">
+            <HintPath>..\Dependencies\SDK\ReadyM.Api.Multiplayer.dll</HintPath>
+        </Reference>
+        <Reference Include="ReadyM.Relay.Client">
+            <HintPath>..\Dependencies\SDK\ReadyM.Relay.Client.dll</HintPath>
+        </Reference>
+        <Reference Include="ReadyM.Wukong.Common">
+            <HintPath>..\Dependencies\SDK\ReadyM.Wukong.Common.dll</HintPath>
+        </Reference>
+        <Reference Include="UnrealEngine">
+            <HintPath>..\Dependencies\Game\UnrealEngine.dll</HintPath>
+        </Reference>
+        <Reference Include="UnrealEngine.Runtime">
+            <HintPath>..\Dependencies\Game\UnrealEngine.Runtime.dll</HintPath>
+        </Reference>
+        <Reference Include="WukongMp.Api">
+            <HintPath>..\Dependencies\SDK\WukongMp.Api.dll</HintPath>
+        </Reference>
+        <Reference Include="WukongMp.Sdk">
+            <HintPath>..\Dependencies\SDK\WukongMp.Sdk.dll</HintPath>
+        </Reference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.7" />
+    </ItemGroup>
+
+</Project>
