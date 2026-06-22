@@ -1,0 +1,17 @@
+{
+  "uniqueId": "WukongMp.PropHunt",
+  "version": "1.0.0",
+  "name": "PropHunt",
+  "author": "WukongMp",
+  "description": "Adds a prop hunt game mode to the game. Needs the coop mod to work",
+  "dependencies": [
+    {
+      "uniqueId": "WukongMp.Sdk",
+      "minimumVersion": "0.2.1"
+    },
+    {
+      "uniqueId": "WukongMp.Coop",
+      "minimumVersion": "0.2.1"
+    }
+  ]
+}
