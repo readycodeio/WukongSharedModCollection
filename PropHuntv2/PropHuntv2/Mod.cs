@@ -1,36 +1,30 @@
-﻿using CSharpModBase.Input;
-using ReadyM.Api.Command;
+﻿using b1;
+using b1.ECS;
+using b1.UI.Comm;
+using BtlShare;
+using CoreSound;
+using HarmonyLib;
 using ReadyM.Api.DI;
-using ReadyM.Api.Idents;
-using ReadyM.Api.Multiplayer.Client;
-using ReadyM.Api.Multiplayer.Generators;
-using ReadyM.Api.Multiplayer.Protocol.Enums;
-using ReadyM.Api.Multiplayer.RPC;
-using ReadyM.Api.Multiplayer.Serialization;
+using System;
+using System.Collections.Generic;
 using UnrealEngine.Engine;
-using UnrealEngine.Runtime;
 using WukongMp.Api;
 using WukongMp.Api.Configuration;
 using WukongMp.Sdk;
 using WukongMp.Sdk.Api;
-using HarmonyLib;
-using b1;
-using System;
-using BtlShare;
 
 namespace WukongMp.PropHunt;
 
 public class Mod : ModBase
 {
-    // DO TESTOWANIA
-    // SHIFT+O - Reroll propa
-    // Czy hider może atakować lub robić cokolwiek
-    // Czy seeker może namierzać
-
     public override string Name => "PropHunt Mod";
 
     public static PropHuntRpc? Rpc { get; private set; } = null;
     public static PropHuntSystem? System { get; private set; } = null;
+    public static PropHuntService? Service { get; private set; } = null;
+
+    public static SoundCoreService? SService { get; private set; } = null;
+    public static SoundCoreSystem? SSystem { get; private set; } = null;
 
     public static UWorld? World { get; set; } = null;
 
@@ -39,8 +33,17 @@ public class Mod : ModBase
         // register and resolve your services here, for example:
         services.RegisterSingleton<PropHuntRpc>();
         services.RegisterSingleton<PropHuntSystem>();
+        services.RegisterSingleton<PropHuntService>();
+
         Rpc = services.Resolve<PropHuntRpc>();
         System = services.Resolve<PropHuntSystem>();
+        Service = services.Resolve<PropHuntService>();
+        
+        services.RegisterSingleton<SoundCoreService>();
+        services.RegisterSingleton<SoundCoreSystem>();
+        
+        SService = services.Resolve<SoundCoreService>();
+        SSystem = services.Resolve<SoundCoreSystem>();
 
         Core.InitializeDefaultMode();
 
@@ -50,6 +53,23 @@ public class Mod : ModBase
             gameMode.RegisterBinds();
             WukongApi.Configuration.SetIsSkillEnabledQuery(QuerySkillAllowed);
         }
+
+        //var haramony = new Harmony("WukongMp.PropHunt");
+        //var originalBloodBarUI = AccessTools.Method(typeof(BUI_BattleInfoCS), "InitBloodBarUI");
+        //var patchInfo = Harmony.GetPatchInfo(originalBloodBarUI);
+        //var myPrefix = AccessTools.Method(typeof(PatchInitBloodBarUI), "Prefix");
+
+        //if (patchInfo != null)
+        //{
+        //    foreach (var prefix in patchInfo.Prefixes)
+        //    {
+        //        if (prefix.owner != haramony.Id)
+        //        {
+        //            haramony.Unpatch(originalBloodBarUI, HarmonyPatchType.Prefix, prefix.owner);
+        //        }
+        //    }
+        //}
+        //haramony.Patch(originalBloodBarUI, prefix: new HarmonyMethod(myPrefix));
     }
 
     public static bool QuerySkillAllowed(int skillId)
@@ -84,20 +104,20 @@ public class Mod : ModBase
     }
 }
 
-
-[HarmonyPatch(typeof(BUS_PlayerInputActionComp), "DoAttackLogic")]
+[HarmonyPatch(typeof(BUS_PlayerInputActionComp), "DoAttackLogic", typeof(EInputActionType), typeof(bool), typeof(int))]
 [HarmonyPatchCategory(PatchCategory.Global)]
-public class BlockPropAttacksPatch
+public static class BlockPropAttacksPatch
 {
-    public static bool Prefix(object __instance, EInputActionType actionType, bool isRelease, int descID)
+    public static bool Prefix(EInputActionType InputActionType, bool IsRelease, int DescID)
     {
         try
         {
             if (!WukongApi.Sync.LocalPlayerId.HasValue) return true;
             var myId = WukongApi.Sync.LocalPlayerId.Value;
+
             if (GameState.IsGameActive && GameState.Hiders.Contains(myId))
             {
-                switch (actionType)
+                switch (InputActionType)
                 {
                     case EInputActionType.Dodge:
                     case EInputActionType.Jump:
@@ -109,7 +129,7 @@ public class BlockPropAttacksPatch
             }
             else if (GameState.IsGameActive && GameState.Seekers.Contains(myId))
             {
-                switch (actionType)
+                switch (InputActionType)
                 {
                     case EInputActionType.CameraLock:
                     case EInputActionType.CameraLockPointHide:
@@ -123,6 +143,7 @@ public class BlockPropAttacksPatch
         }
         catch (Exception ex)
         {
+            Logging.LogError(ex.Message);
             return true;
         }
     }
@@ -130,10 +151,71 @@ public class BlockPropAttacksPatch
 
 [HarmonyPatch(typeof(BUS_PlayerInputActionComp), "OnCameraLockTarget")]
 [HarmonyPatchCategory(PatchCategory.Global)]
-public class BlockCameraLockPatch
+public static class BlockCameraLockPatch
 {
-    public static bool Prefix(UnitLockTargetInfo TargetInfo)
+    public static bool Prefix()
     {
+        return false;
+    }
+}
+
+[HarmonyPatch(typeof(BUI_BattleInfoCS), "InitBloodBarUI")]
+[HarmonyPatchCategory(PatchCategory.Global)]
+public class PatchInitBloodBarUI
+{
+    public static Dictionary<Entity, BUI_ProjWidget> CachedBloodBars;
+
+    public static bool Prefix(BUI_BattleInfoCS __instance, Dictionary<Entity, BUI_ProjWidget> ___EntityDic, Dictionary<AActor, DSBarInfoBind> ___BloodBarActorBindDict, Entity Entity)
+    {
+        if (CachedBloodBars == null)
+        {
+            CachedBloodBars = ___EntityDic;
+        }
+
+        if (!Core.Config.BloodBarsVisible)
+        {
+            return false;
+        }
+        
+        if (___EntityDic.ContainsKey(Entity))
+            return false;
+        var actor = Entity.ToActor();
+        var ownerUnit = actor as BGUCharacterCS;
+        if (ownerUnit == null)
+            return false;
+        var unitCommDesc = BGW_GameDB.GetUnitCommDesc(ownerUnit.GetResID());
+        if (unitCommDesc == null)
+            return false;
+        var battleInfoExtendDesc = BGW_GameDB.GetUnitBattleInfoExtendDesc(ownerUnit.GetFinalBattleInfoExtendID());
+        if (battleInfoExtendDesc == null)
+            return false;
+
+        var maybePlayer = WukongApi.Sync.GetPlayerEntityByActor(actor);
+        var isPlayer = maybePlayer.HasValue;
+        var bloodBarShowType = isPlayer ? EBGUBloodBarShowType.Always : EBGUBloodBarShowType.Change;
+
+        var isInPlayerTeam = !isPlayer && BGU_DataUtil.GetIsInPlayerTeam(actor);
+
+        if (battleInfoExtendDesc.BloodBarType == EBGUBloodBarType.None || isInPlayerTeam)
+            return false;
+
+        var bloodBarPoolWidget = __instance.GetTopBarPoolWidget(ownerUnit, true) as BUI_MBarBase;
+        bloodBarPoolWidget?.InitBloodBar(battleInfoExtendDesc.BloodBarType, unitCommDesc.HPBarHeightOffset);
+
+        if (bloodBarPoolWidget != null)
+        {
+            if (bloodBarShowType == EBGUBloodBarShowType.Always)
+            {
+                bloodBarPoolWidget.SetAlwaysShowSetting(AlwaysShowSetting.Always, true);
+            }
+
+            ___EntityDic.Add(Entity, bloodBarPoolWidget);
+        }
+
+        if (!___EntityDic.ContainsKey(Entity) || !___BloodBarActorBindDict.TryGetValue(actor, out var dsBarInfoBind))
+            return false;
+
+        dsBarInfoBind.ReInit();
         return false;
     }
 }

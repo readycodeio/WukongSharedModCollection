@@ -1,20 +1,15 @@
-﻿using LiteNetLib;
+﻿using CoreSound;
 using ReadyM.Api.Idents;
 using ReadyM.Api.Multiplayer.Client;
 using ReadyM.Api.Multiplayer.Generators;
 using ReadyM.Api.Multiplayer.Protocol.Enums;
 using ReadyM.Api.Multiplayer.RPC;
 using ReadyM.Api.Multiplayer.Serialization;
-using ReadyM.Wukong.Common.ECS.Components;
 using ReadyM.Wukong.Common.ECS.Values;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using UnrealEngine.Engine;
 using UnrealEngine.Runtime;
 using WukongMp.Api;
-using WukongMp.Api.WukongUtils;
 using WukongMp.Sdk.Api;
 using WukongMp.Sdk.Entities;
 
@@ -27,35 +22,49 @@ public partial class PropHuntRpc(IRpcClient client, IRelaySerializer serializer)
     {
         RunOnMainThread(() =>
         {
-
             if (!GameState.PlayerCharacters.TryGetValue(hiderId, out var character)) return;
             if (!GameState.PlayerActors.TryGetValue(hiderId, out var actor) || actor == null) return;
+            try
+            { 
+                actor.SetActorHiddenInGame(true);
 
-            actor.SetActorHiddenInGame(true);
+                character.Pawn?.CanBeDamaged = true;
 
-            //if ((bool)!WukongApi.Sync.LocalMainCharacter?.AreTeamsEqual(character.PlayerId))
-            //{
-            //    character.HideMarker();
-            //}
-
-            character.Pawn?.CanBeDamaged = true;
-
-            if (Utils.SpawnProp(propClassName, character.Location.ToFVector(), character.Rotation.ToFRotator(), actor, false) is not { } prop) return;
-            if (GameState.PlayerProps.TryGetValue(hiderId, out var oldProp))
+                if (Utils.SpawnProp(propClassName, character.Location.ToFVector(), character.Rotation.ToFRotator(), actor, false) is not { } prop) return;
+                if (GameState.PlayerProps.TryGetValue(hiderId, out var oldProp))
+                {
+                    oldProp?.DestroyActor();
+                }
+                GameState.PlayerProps[hiderId] = prop;
+            }
+            catch (Exception ex)
             {
-                oldProp?.DestroyActor();
+                Logging.LogError($"OnPlayerHide: {ex.Message}");
             }
         });
     }
 
-    //[RpcEvent(RelayMode.GlobalAll)]
-    //private void OnDecoyDeploy(PlayerId __sender, PlayerId hiderId, string propClassName)
-    //{
-    //    RunOnMainThread(() =>
-    //    {
+    [RpcEvent(RelayMode.GlobalAll)]
+    private void OnDecoyDeploy(PlayerId __sender, string propClassName)
+    {
+        RunOnMainThread(() =>
+        {
+            if (!GameState.PlayerCharacters.TryGetValue(__sender, out var character)) return;
+            if (!GameState.PlayerActors.TryGetValue(__sender, out var actor) || actor == null) return;
+            try
+            {
+                var decoy = Utils.SpawnActor(propClassName, actor.GetActorLocation(), actor.GetActorRotation());
 
-    //    });
-    //}
+                decoy?.SetActorEnableCollision(false);
+                decoy?.SetActorHiddenInGame(false);
+                GameState.PlayerDecoys[__sender].Add(decoy);
+            }
+            catch (Exception ex)
+            {
+                Logging.LogError($"OnDecoyDeploy: {ex.Message}");
+            }
+        });
+    }
 
     [RpcEvent(RelayMode.GlobalAll)]
     private void OnPropRotate(PlayerId __sender, float newRotation)
@@ -72,21 +81,92 @@ public partial class PropHuntRpc(IRpcClient client, IRelaySerializer serializer)
     }
 
     [RpcEvent(RelayMode.GlobalAll)]
-    private void OnPlayerJoined(PlayerId __sender, PlayerId playerId)
+    private void OnForceHidersPlaySound(string soundName)
+    {
+        RunOnMainThread(() => 
+        {
+            if (GameState.GameSounds.Contains(soundName))
+            {
+                foreach (var hider in GameState.Hiders)
+                {
+                    if (GameState.PlayerActors.TryGetValue(hider, out var actor))
+                    {
+                        SoundCore.PlaySound(soundName, location: actor.GetActorLocation());
+                    }
+                }
+            }
+        });
+    }
+
+    [RpcEvent(RelayMode.GlobalAll)]
+    private void OnHiderPlaySound(PlayerId __sender, string soundName)
+    {
+        if (GameState.GameSounds.Contains(soundName))
+        {
+            if (GameState.Hiders.Contains(__sender))
+            {
+                if (GameState.PlayerActors.TryGetValue(__sender, out var character))
+                {
+                    SoundCore.PlaySound(soundName, location: character.GetActorLocation());
+                }
+            }
+        }
+    }
+
+    [RpcEvent(RelayMode.GlobalAll)]
+    private void OnForcePlayersPlaySound(string soundName)
+    {
+        if (GameState.GameSounds.Contains(soundName))
+        {
+            foreach (var playerActor in GameState.PlayerActors.Values)
+            {
+                if (playerActor != null)
+                {
+                    SoundCore.PlaySound(soundName, location: playerActor.GetActorLocation());
+                }
+            }
+        }
+    }
+
+    [RpcEvent(RelayMode.GlobalAll)]
+    private void OnPlayerPlaySound(PlayerId __sender, string soundName)
+    {
+        if (GameState.GameSounds.Contains(soundName))
+        {
+            var character = WukongApi.Sync.GetMainCharacterByPlayerId(__sender);
+            if (character.HasValue)
+            {
+                SoundCore.PlaySound(soundName, location: character.Value.Location.ToFVector());
+            }
+        }
+    }
+
+    [RpcEvent(RelayMode.GlobalAll)]
+    private void OnLateJoinSnapshot(PlayerId __sender, PlayerId targetPlayerId, GameStateSnapshot snapshot)
     {
         RunOnMainThread(() =>
         {
-            if (GameState.IsGameActive)
+            if (!GameState.Spectators.Contains(targetPlayerId))
             {
-                GameState.Spectators.Add(playerId);
+                GameState.Spectators.Add(targetPlayerId);
+            }
 
-                if (playerId == WukongApi.Sync.LocalPlayerId)
+            if (WukongApi.Sync.LocalPlayerId == targetPlayerId)
+            {
+                GameState.ApplySnapshot(snapshot);
+
+                var myCharacter = WukongApi.Sync.LocalMainCharacter;
+                if (myCharacter.HasValue)
                 {
-                    var myCharacter = WukongApi.Sync.LocalMainCharacter;
-                    if (myCharacter.HasValue)
-                    {
-                        WukongApi.Sync.EnableSpectatorMode(myCharacter.Value, SpectatorReason.Observer);
-                    }
+                    WukongApi.Sync.EnableSpectatorMode(myCharacter.Value, SpectatorReason.Observer);
+                    WukongApi.Local.ShowTip("Round already in progress, joining as a spectator!", true);
+                }
+            }
+            else
+            {
+                if (!WukongApi.Sync.IsMasterClient)
+                {
+                    GameState.ElapsedRoundTime = snapshot.ElapsedRoundTime;
                 }
             }
         });
@@ -97,16 +177,13 @@ public partial class PropHuntRpc(IRpcClient client, IRelaySerializer serializer)
     {
         RunOnMainThread(() =>
         {
-            //WukongApi.Chat.ShowLocalMessage("1",FLinearColor.Yellow);
             GameState.Hiders.Remove(playerFound);
             GameState.Spectators.Add(playerFound);
-            //WukongApi.Chat.ShowLocalMessage("2",FLinearColor.Yellow);
 
             if (GameState.PlayerProps.TryGetValue(playerFound, out var prop))
             {
                 prop?.DestroyActor();
                 GameState.PlayerProps.Remove(playerFound);
-                //WukongApi.Chat.ShowLocalMessage("3",FLinearColor.Yellow);
             }
 
             if (playerFound == WukongApi.Sync.LocalPlayerId)
@@ -116,16 +193,13 @@ public partial class PropHuntRpc(IRpcClient client, IRelaySerializer serializer)
                 {
                     WukongApi.Sync.EnableSpectatorMode(myCharacter.Value, SpectatorReason.Death);
                 }
-                //WukongApi.Chat.ShowLocalMessage("4",FLinearColor.Yellow);
             }
 
             if (WukongApi.Sync.IsMasterClient)
             {
                 WukongApi.Sync.TryGetPlayerInfoById(playerFound, out var nickname, out _);
                 WukongApi.Chat.SendServerMessage($"Hider {nickname} was found! Hiders remaining: {GameState.Hiders.Count}");
-                //WukongApi.Chat.ShowLocalMessage("5",FLinearColor.Yellow);
             }
-            //WukongApi.Chat.ShowLocalMessage("6",FLinearColor.Yellow);
         });
     }
 
@@ -159,7 +233,7 @@ public partial class PropHuntRpc(IRpcClient client, IRelaySerializer serializer)
             }
 
             GameState.Reset();
-            GameState.ApplySnapshop(_snapshot);
+            GameState.ApplySnapshot(_snapshot);
             Core.Config = _config;
 
             GameState.InitPlayerCharacters();
@@ -177,7 +251,7 @@ public partial class PropHuntRpc(IRpcClient client, IRelaySerializer serializer)
                 WukongApi.Local.ShowTip("You are a seeker!", true);
                 GameState.OriginalSeekerLocation = WukongApi.Sync.LocalMainCharacter.Value.Location.ToFVector();
 
-                character.Pawn?.SetTeamID((int)Core.Team.Seeker);   
+                character.Pawn?.SetTeamID((int)Core.Team.Seeker);
                 character.TeamId = (int)Core.Team.Seeker;
                 //character.EnableInteraction(true);
 
@@ -186,7 +260,6 @@ public partial class PropHuntRpc(IRpcClient client, IRelaySerializer serializer)
                     if (GameState.PlayerCharacters.TryGetValue(hiderId, out var hiderCharacter))
                     {
                         hiderCharacter.HideMarker();
-                        //hiderCharacter.HideHpBar();
                     }
                 }
             }
@@ -194,6 +267,7 @@ public partial class PropHuntRpc(IRpcClient client, IRelaySerializer serializer)
             {
                 Random random = new Random();
                 string propName = Utils.propClassNames[random.Next(Utils.propClassNames.Length)];
+                GameState.CurrentPropName = propName;
                 WukongApi.Local.ShowTip("You are a hiding as " + propName, true);
                 Mod.Rpc?.SendPlayerHide(myId.Value, propName);
 
@@ -212,6 +286,29 @@ public partial class PropHuntRpc(IRpcClient client, IRelaySerializer serializer)
             if (!WukongApi.PvP.OwnsPvpState) WukongApi.PvP.InitializeAreaPvpState();
             WukongApi.PvP.InPvP = true;
             WukongApi.PvP.InPvpTournament = false;
+
+            if (!Core.Config.BloodBarsVisible)
+            {
+                try
+                {
+                    if (PatchInitBloodBarUI.CachedBloodBars == null)
+                    {
+                        return;
+                    }
+
+                    foreach (var widget in PatchInitBloodBarUI.CachedBloodBars.Values)
+                    {
+                        if (widget != null)
+                        {
+                            widget.SetVisibility(UnrealEngine.UMG.ESlateVisibility.Hidden);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    WukongApi.Chat.ShowLocalMessage(ex.Message, FLinearColor.Red);
+                }
+            }
         });
     }
 
@@ -225,11 +322,6 @@ public partial class PropHuntRpc(IRpcClient client, IRelaySerializer serializer)
             var myId = WukongApi.Sync.LocalPlayerId;
             if (myId != null && GameState.Seekers.Contains(myId.Value))
             {
-                    /*if (GameState.PlayerActors.TryGetValue(myId.Value, out var actor))
-                    {
-                        //actor.Teleport(GameState.OriginalSeekerLocation, actor.GetActorRotation());
-                        //actor.SetActorLocation(GameState.OriginalSeekerLocation, false, out _, true);
-                    }*/
                     var seeker = WukongApi.Sync.LocalMainCharacter;
                     if (seeker.HasValue)
                     {
@@ -238,21 +330,14 @@ public partial class PropHuntRpc(IRpcClient client, IRelaySerializer serializer)
                         seeker.Value.Teleport(newLocation.ToVector3(), seeker.Value.Rotation);
                     }
             }
-
-            foreach (var player in WukongApi.Sync.AllPlayers)
-            {
-                if (GameState.PlayerProps.ContainsKey(player))
-                {
-                    GameState.PlayerProps[player].DisableInput(GameUtils.GetPlayerController());
-                }
-            }
+            
         });
     }
 
     [RpcEvent(RelayMode.GlobalAll)]
     private void OnGameStop(PlayerId __sender)
     {
-        //Game force stop by command prop stop
+        
     }
 
     [RpcEvent(RelayMode.GlobalAll)]

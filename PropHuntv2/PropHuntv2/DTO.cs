@@ -1,8 +1,6 @@
 ﻿using LiteNetLib.Utils;
+using ReadyM.Api.Idents;
 using ReadyM.Api.Multiplayer.Generators;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace WukongMp.PropHunt;
 
@@ -20,8 +18,11 @@ public partial struct GameConfig : INetSerializable
 
     public float PreparationTime;
     public float GameTime;
+
     public bool CustomTeams;
     public bool DestroyTamers;
+    public bool BloodBarsVisible;
+
 
     public GameConfig()
     {
@@ -33,11 +34,14 @@ public partial struct GameConfig : INetSerializable
 
         this.MaxHiderDecoys = 3;
         this.MaxHiderPermaDecoys = 1;
-        
+       
         this.PreparationTime = 5f;
+        
         this.GameTime = 70f;
+        
         this.CustomTeams = false;
         this.DestroyTamers = true;
+        this.BloodBarsVisible = false;
     }
 
     public static GameConfig Default => new GameConfig();
@@ -58,6 +62,9 @@ public partial struct GameStateSnapshot : INetSerializable
     public string Hiders;
     public string Spectators;
 
+    public PlayerPropNetData[] ActiveProps;
+    public DecoyNetData[] ActiveDecoys;
+
     public GameStateSnapshot()
     {
         this.IsGameActive = false;
@@ -68,7 +75,26 @@ public partial struct GameStateSnapshot : INetSerializable
         this.SeekersScore = 0;
 
         this.Seekers = "";
-        this.Hiders= "";
+        this.Hiders = "";
         this.Spectators = "";
+
+        this.ActiveProps = [];
+        this.ActiveDecoys = [];
     }
+}
+
+[DeriveINetSerializable]
+public partial struct DecoyNetData : INetSerializable
+{
+    public PlayerId OwnerId;
+    public string PropName;
+    public float X, Y, Z;
+    public float Pitch, Yaw, Roll;
+}
+
+[DeriveINetSerializable]
+public partial struct PlayerPropNetData : INetSerializable
+{
+    public PlayerId OwnerId;
+    public string PropName;
 }

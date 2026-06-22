@@ -1,20 +1,8 @@
-﻿using b1;
-using HarmonyLib;
-using ReadyM.Api.Idents;
-using ReadyM.Wukong.Common.ECS.Components;
-using ReadyM.Wukong.Common.ECS.Values;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Text;
-using UnrealEngine.AIModule;
-using UnrealEngine.AssetRegistry;
 using UnrealEngine.Engine;
 using UnrealEngine.Runtime;
-using UnrealEngine.UMG;
 using WukongMp.Api;
 using WukongMp.Api.WukongUtils;
 using WukongMp.Sdk.Api;
@@ -34,10 +22,10 @@ public static class Utils
 
     public static string[] propClassNames = new string[]
     {
-            //"BP_yaocai_biou_C",
-            //"BP_yaocai_gancao_C",
-            //"BP_Yaocai_MuJinHua_C",
-            //"BP_yaocai_tujun_C",
+            "BP_yaocai_biou_C",
+            "BP_yaocai_gancao_C",
+            "BP_Yaocai_MuJinHua_C",
+            "BP_yaocai_tujun_C",
             //"BPO_TreasureBox_03a_C",
             "BPO_TreasureBox_04a_C",
             "BPO_TreasureBox_06_C",
@@ -46,9 +34,9 @@ public static class Utils
             "BPO_TreasureBox_Coffin_01_C",
             //"BPO_TreasureBox_fsc_C",
             "BPO_TreasureBox_JiaSi_07a_C",
-            //"HFS_Destructible_HuoPen_C",
-            //"HFS_Destructible_ShuiGang_C",
-            //"HFS_Destructible_ShuiGang_droppable_C",
+            "HFS_Destructible_HuoPen_C",
+            "HFS_Destructible_ShuiGang_C",
+            "HFS_Destructible_ShuiGang_droppable_C",
             //"HFS_Tudipo_Yun_C"
     };
 
@@ -96,7 +84,7 @@ public static class Utils
         prop?.SetActorHiddenInGame(false);
         prop?.SetActorEnableCollision(enableCollision);
 
-        WukongApi.Chat.ShowLocalMessage($"Spawning prop at: {newLocation.Z} | Player.Z: {location.Z}",FLinearColor.Yellow);
+        WukongApi.Chat.ShowLocalMessage($"Spawning prop at: {newLocation.Z} | Player.Z: {location.Z}", FLinearColor.Yellow);
         prop?.AttachToActor(actorToIgnore, new FName(""), EAttachmentRule.KeepWorld, EAttachmentRule.KeepWorld, EAttachmentRule.KeepWorld, false);
         WukongApi.Chat.ShowLocalMessage($"After attachment: {prop?.GetActorLocation().Z}", FLinearColor.Yellow);
         return prop;
@@ -161,38 +149,9 @@ public static class Utils
         return null;
     }
 
-    //public static void test()
-    //{
-    //    AActor actor = new AActor();
-    //    var pawn = WukongApi.Sync.LocalMainCharacter!.Value.Pawn;
+    public static void test()
+    {
+        var pawn = WukongApi.Sync.LocalMainCharacter?.Pawn;
 
-    //    actor.DisableInput(GameUtils.GetPlayerController());
-
-    //    //UTextBlock textBlock = new UTextBlock();
-    //    //textBlock.SetText("abc");
-
-    //    UGridPanel panel = new UGridPanel();
-
-    //    BUS_PlayerInputActionComp bus = new BUS_PlayerInputActionComp();
-
-    //    USoundBase sound = new();
-    //    AIController controller = new AIController();
-    //    BGU_CharacterAI ai = new BGU_CharacterAI();
-    //    UGameplayStatics.GetObjects<USoundBase>(EObjectFlags.NoFlags, true, EInternalObjectFlags.None).Current.GetType().Name.ToLower();
-    //    var registry = UAssetRegistryHelpers.GetAssetRegistry();
-
-    //    //var myPawn = GameUtils.GetControlledPawn();
-    //    //var playerComponent = EcsExtensions.GetComponent<MainCharacterComponent>(myPawn);
-    //    //var currentEq = playerComponent.Equipment;
-    //    //var weaponId = currentEq.GetItem(EquipPosition.Weapon);
-    //    //playerComponent.Equipment.WithSetItem(EquipPosition.Weapon, weaponId + 1);
-
-    //    //var myPawn = GameUtils.GetControlledPawn();
-
-    //    //pawn = WukongApi.Sync.LocalMainCharacter?.Pawn;
-    //    //BGUActorBaseCS actor = new BGUActorBaseCS();
-
-    //    //var playerComponent = EcsExtensions.GetComponent<MainCharacterComponent>(pawn);
-
-    //}
+    }
 }

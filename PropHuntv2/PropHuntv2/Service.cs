@@ -1,19 +1,10 @@
-﻿using ReadyM.Api.DI;
+﻿using CoreSound;
+using LiteNetLib;
+using ReadyM.Api.DI;
 using ReadyM.Api.Idents;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using ReadyM;
-using WukongMp;
+using UnrealEngine.Runtime;
 using WukongMp.Sdk.Api;
 using WukongMp.Sdk.Entities;
-using UnrealEngine.Engine;
-using WukongMp.Api.WukongUtils;
-using ReadyM.Wukong.Common.ECS.Values;
-using UnrealEngine.Plugins.ControlRig;
-using LiteNetLib;
-using UnrealEngine.Runtime;
-using b1;
 
 namespace WukongMp.PropHunt;
 
@@ -25,6 +16,13 @@ public sealed class PropHuntService : IHostedService
         WukongApi.Events.OnDisconnected += OnPlayerDisconnected;
         WukongApi.Events.OnPlayerDead += OnPlayerFound;
         WukongApi.Events.OnJoinedArea += OnAreaJoinedHanlder;
+        RegisterPropHuntSounds();
+    }
+
+    private void RegisterPropHuntSounds()
+    {
+        SoundCore.RegisterSound("Taunt_Stick", "AkAudioEvent'/Game/00Main/Audio/SFX/Environment/BPO/ENV_Position_BPO_Stick.ENV_Position_BPO_Stick'");
+        GameState.GameSounds.Add("Taunt_Stick");
     }
 
     private void OnAreaJoinedHanlder(AreaId id)
@@ -36,27 +34,6 @@ public sealed class PropHuntService : IHostedService
         WukongApi.Configuration.IsSupportMultiLockEnabled = false;        
     }
 
-    //private void OnPlayerConnected(ReadyMainCharacter character)
-    //{
-    //    PlayerId id = character.PlayerId;
-    //    GameState.PlayerCharacters[id] = character;
-    //    var actor = Utils.GetCharacterActor(character);
-    //    if (actor != null)
-    //    {
-    //        GameState.PlayerActors[id] = actor;
-    //    }
-
-    //    if (Core.CurrentGameMode is PropHuntGameMode gameMode)
-    //    {
-    //        gameMode.ManagePlayerJoin(character);
-    //    }
-
-    //    if (WukongApi.Sync.IsMasterClient)
-    //    {
-    //        Mod.Rpc?.SendPlayerJoined(character.PlayerId);
-    //    }
-    //}
-
     private void OnPlayerConnected(ReadyMainCharacter character)
     {
         GameState.PlayerCharacters[character.PlayerId] = character;
@@ -64,24 +41,24 @@ public sealed class PropHuntService : IHostedService
         {
             GameState.PlayerActors[character.PlayerId] = actor;
         }
-        
-        GameState.HasPlayerJoinedLate = true;
 
-        if (Core.CurrentGameMode is PropHuntGameMode gameMode)
-        {
-            gameMode.ManagePlayerJoin(character);
-        }
+        GameState.HasPlayerJoinedLate = true;
 
         if (WukongApi.Sync.IsMasterClient)
         {
-            Mod.Rpc?.SendPlayerJoined(character.PlayerId);
+            ManagePlayerJoin(character);
         }
     }
-
+    public void ManagePlayerJoin(ReadyMainCharacter character)
+    {
+        if (GameState.IsGameActive)
+        {
+            var snapshot = GameState.CreateSnapshop();
+            Mod.Rpc?.SendLateJoinSnapshot(character.PlayerId, snapshot);
+        }
+    }
     private void OnPlayerFound(ReadyMainCharacter character, ReadyCharacter? nullable)
     {
-        WukongApi.Chat.ShowLocalMessage("event strzelił", FLinearColor.Yellow);
-
         if (!WukongApi.Sync.IsMasterClient || !GameState.IsGameActive)
         {
             return;

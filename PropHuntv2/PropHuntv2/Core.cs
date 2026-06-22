@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Concurrent;
-using UnrealEngine.UMG;
-
-namespace WukongMp.PropHunt;
+﻿namespace WukongMp.PropHunt;
 
 public static class Core
 {
