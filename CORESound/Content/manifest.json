@@ -1,0 +1,13 @@
+{
+  "uniqueId": "BasicSoundCore",
+  "version": "1.0.0",
+  "name": "BasicSoundCore",
+  "author": "WukongMP",
+  "description": "Basic sound utilities",
+  "dependencies": [
+    {
+      "uniqueId": "WukongMp.Sdk",
+      "minimumVersion": "0.2.1"
+    }
+  ]
+}
