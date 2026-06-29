@@ -1,0 +1,20 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace WukongMp.Toolkit.Levels;
+
+public static class LevelEvents
+{
+    public static event Action<string>? OnLevelLoaded;
+    public static event Action<string>? OnLevelUnloaded;
+
+    internal static void InvokeOnLevelLoaded(string levelName)
+    {
+        OnLevelLoaded?.Invoke(levelName);
+    }
+    internal static void InvokeLevelUnloaded(string levelName)
+    {
+        OnLevelUnloaded?.Invoke(levelName);
+    }
+}

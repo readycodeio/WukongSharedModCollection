@@ -1,0 +1,13 @@
+{
+  "uniqueId": "WukongMp.Sdk.Toolkit",
+  "version": "1.0.0",
+  "name": "Toolkit",
+  "author": "WukongMp",
+  "description": "Library for basic utility functions",
+  "dependencies": [
+    {
+      "uniqueId": "WukongMp.Sdk",
+      "minimumVersion": "0.2.1"
+    }
+  ]
+}
