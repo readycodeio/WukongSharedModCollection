@@ -11,6 +11,7 @@ using WukongMp.Sdk.Entities;
 
 namespace WukongMp.Toolkit.Levels;
 
+[Experimental("Not tested properly")]
 public static class LevelsCore
 {
     private class AsyncLoadData
@@ -120,7 +121,7 @@ public static class LevelsCore
 
         if (freezeOnLoad)
         {
-            LevelEvents.InvokeOnLevelLoaded(levelToLoad);
+            LevelsEvents.InvokeOnLevelLoaded(levelToLoad);
             ExecutePostLoadTeleport(targetActorTag, targetActorClass, safeFallback);
         }
         else
@@ -206,7 +207,7 @@ public static class LevelsCore
                 }
             }
 
-            foreach (var lvl in readyLevels) LevelEvents.InvokeOnLevelLoaded(lvl);
+            foreach (var lvl in readyLevels) LevelsEvents.InvokeOnLevelLoaded(lvl);
         }
     }
     private static List<string> GetLevelsByState(EGSLevelState targetState)
@@ -287,6 +288,6 @@ public static class LevelsCore
         UBGUWCStreamingFuncLib.SetLevelsState(world, levelToUnload, EGSLevelState.Unloaded, -1, bKeywordMatch: false, bBlockOnLoad: false);
 
         Logging.LogInformation($"Unloaded level: {levelToUnload}");
-        LevelEvents.InvokeLevelUnloaded(levelToUnload!);
+        LevelsEvents.InvokeLevelUnloaded(levelToUnload!);
     }
 }

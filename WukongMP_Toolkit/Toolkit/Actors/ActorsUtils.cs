@@ -65,7 +65,7 @@ public static class Actors
         }
         catch (Exception ex)
         {
-            Logging.LogError($"Failed to load class from: {className}");
+            Logging.LogError($"Failed to load class from: {className}: {ex.Message}");
         }
 
         return null;

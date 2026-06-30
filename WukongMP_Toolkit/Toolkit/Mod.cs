@@ -7,6 +7,7 @@ using WukongMp.Sdk;
 using WukongMp.Sdk.Api;
 using WukongMp.Toolkit.Actors;
 using WukongMp.Toolkit.Debug;
+using WukongMp.Toolkit.Debug.Sync;
 using WukongMp.Toolkit.Levels;
 
 namespace WukongMp.Toolkit.Audio;
@@ -53,8 +54,10 @@ public class Mod : ModBase
         {
             Logging.LogException(ex);
         }
-
+#if DEBUG
         Debug.Test.Testing();
+        Debug.Sync.DebugSync.SyncTest();
+#endif
     }
 }
 

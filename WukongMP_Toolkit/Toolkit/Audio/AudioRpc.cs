@@ -1,4 +1,5 @@
-﻿using ReadyM.Api.Idents;
+﻿using b1;
+using ReadyM.Api.Idents;
 using ReadyM.Api.Multiplayer.Client;
 using ReadyM.Api.Multiplayer.Generators;
 using ReadyM.Api.Multiplayer.Protocol.Enums;
@@ -21,7 +22,7 @@ public partial class AudioRpc(IRpcClient client, IRelaySerializer serializer) : 
             FVector loc = new FVector(parameters.X, parameters.Y, parameters.Z);
             FRotator rot = new FRotator(parameters.Pitch, parameters.Yaw, parameters.Roll);
 
-            AudioCore.PlaySound(parameters.SoundSource, location: loc);
+            AudioCore.PlaySound(parameters.SoundSource, location: loc, rotation: rot);
         });
     }
 

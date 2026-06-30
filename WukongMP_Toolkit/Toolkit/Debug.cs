@@ -1,22 +1,13 @@
 ﻿using b1;
-using b1.Plugins.AkAudio;
-using BtlShare;
-using CsB1;
-using OssB1;
 using ReadyM.Api.Command;
-using ReadyM.Wukong.Common.ECS.Components;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using UnrealEngine.AssetRegistry;
 using UnrealEngine.Engine;
-using UnrealEngine.Plugins.ApexDestruction;
 using UnrealEngine.Runtime;
 using UnrealEngine.UMG;
 using WukongMp.Api;
-using WukongMp.Api.WukongUtils;
 using WukongMp.Sdk.Api;
 using WukongMp.Sdk.Entities;
 using WukongMp.Toolkit.Actors;
@@ -38,21 +29,24 @@ public static class Test
             var location = player.GetActorLocation();
             var rotation = player.GetActorRotation();
 
-            //Fails 90% of time because UClass.GetClass looks for input in RAM
+            //Short object name only works if class is stream loaded with level
 
-            if (Actors.Actors.SpawnActorAtLocation("HFS_Destructible_ShuiGang_C", location.Add_VectorVector(new FVector(500, 0, 500)), rotation) == null)
+            //if (Actors.Actors.SpawnActorAtLocation("HFS_Destructible_ShuiGang_C", location.Add_VectorVector(new FVector(500, 0, 500)), rotation) == null)
+            if (Actors.Actors.SpawnActorAtLocation(Assets.Destructible.HFS_Destructible_ShuiGang, location.Add_VectorVector(new FVector(500, 0, 500)), rotation) == null)
             {
                 WukongApi.Chat.ShowLocalMessage($"Failed to spawn prop at location", FLinearColor.Red);
             }
 
-            var actor = Actors.Actors.SpawnActor("HFS_Destructible_HuoPen_C");
+            //var actor = Actors.Actors.SpawnActor("HFS_Destructible_HuoPen_C");
+            var actor = Actors.Actors.SpawnActor(Assets.Destructible.HFS_Destructible_HuoPen);
             if (actor == null)
             {
                 WukongApi.Chat.ShowLocalMessage($"Failed to spawn prop", FLinearColor.Red);
             }
             actor?.SetActorLocationAndRotation(location.Add_VectorVector(new FVector(500, 500, 500)), rotation, false, out _, true);
 
-            if (Actors.Actors.SpawnActorAtFloor("BPO_TreasureBox_JiaSi_07a_C", location.Add_VectorVector(new FVector(0, 500, 500)), rotation) == null)
+            //if (Actors.Actors.SpawnActorAtFloor("BPO_TreasureBox_JiaSi_07a_C", location.Add_VectorVector(new FVector(0, 500, 500)), rotation) == null)
+            if (Actors.Actors.SpawnActorAtFloor(Assets.Chests.BPO_TreasureBox_Coffin_02, location.Add_VectorVector(new FVector(0, 500, 500)), rotation) == null)
             {
                 WukongApi.Chat.ShowLocalMessage($"Failed to spawn prop at floor", FLinearColor.Red);
             }
@@ -139,28 +133,27 @@ public static class Test
         {
             try
             {
-
                 if (chest == null)
                 {
-                    WukongApi.Chat.ShowLocalMessage("Chest does not exist yet", FLinearColor.Red);
+                    WukongApi.Chat.ShowLocalMessage("Chest does not exist", FLinearColor.Red);
                     return;
                 }
-
-                var drops = chest.GetComponentByClass<BUS_DropItemComp>() as BUS_DropItemComp;
-                var interaction = chest.GetComponentByClass<BUS_InteractComp>() as BUS_InteractComp;
 
                 switch (option)
                 {
                     case 0:
+                        var drops = chest.GetComponentByClass<BUS_DropItemComp>() as BUS_DropItemComp;
                         drops.Activate();
+                        WukongApi.Chat.SendServerMessage("drop");
                         break;
                     case 1:
+                        var interaction = chest.GetComponentByClass<BUS_InteractComp>() as BUS_InteractComp;
                         interaction.Activate();
+                        WukongApi.Chat.SendServerMessage("interaction");
                         break;
                     default:
                         break;
                 }
-                
             }
             catch (Exception ex)
             {

@@ -1,11 +1,43 @@
-﻿using System;
+﻿using BtlB1;
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using System.Text;
 
 namespace WukongMp.Toolkit.Actors;
 
 public static class Assets
 {
+    public static List<string> ToList(Type type, bool includeAll = false)
+    {
+        List<string> list;
+
+        if (!includeAll)
+        {
+            list = type
+                .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
+                .Where(f => f.FieldType == typeof(string))
+                .Select(f => (string)f.GetValue(null))
+                .ToList();
+        }
+        else
+        {
+            list = type
+                .GetNestedTypes()
+                .SelectMany(t => t.GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy))
+                .Where(f => f.FieldType == typeof(string))
+                .Select(f => (string)f.GetValue(null))
+                .ToList();
+        }
+        return list;
+    }
+
+    public static List<string> ToList<T>(bool includeAll = false) where T : class
+    {
+        return ToList(typeof(T), includeAll);
+    }
+
     public static class Static
     {
         public const string BPO_GYCY_Build_Obj_huopen_02 =

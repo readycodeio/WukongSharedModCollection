@@ -81,6 +81,7 @@ public static class AudioCore
     public static int PlaySound(
             string soundName,
             FVector? location = null,
+            FRotator? rotation = null,
             PlayerId? targetPlayer = null,
             bool bLoop = false,
             float loopInterval = 2.0f,
@@ -90,8 +91,8 @@ public static class AudioCore
         if (targetPlayer != null)
             return Spatial.PlaySoundAtPlayer(soundName, targetPlayer.Value, sync);
 
-        if (location != null)
-            return Spatial.PlaySoundAtLocation(soundName, location.Value, null, bLoop, loopInterval, callback, bSync: sync);
+        if (location != null && rotation != null)
+            return Spatial.PlaySoundAtLocation(soundName, location.Value, rotation.Value, bLoop, loopInterval, callback, bSync: sync);
 
         return Flat.Play2DSound(soundName, bLoop, loopInterval, callback, bSync: sync);
     }
