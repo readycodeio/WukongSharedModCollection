@@ -14,8 +14,41 @@
         <Reference Include="0Harmony">
             <HintPath>..\Dependencies\Loader\0Harmony.dll</HintPath>
         </Reference>
+        <Reference Include="b1.Managed">
+          <HintPath>..\Dependencies\Game\b1.Managed.dll</HintPath>
+        </Reference>
+        <Reference Include="b1.Native">
+          <HintPath>..\Dependencies\Game\b1.Native.dll</HintPath>
+        </Reference>
+        <Reference Include="b1.NativePlugins">
+          <HintPath>..\Dependencies\Game\b1.NativePlugins.dll</HintPath>
+        </Reference>
+        <Reference Include="B1UI_GSE.Script">
+          <HintPath>..\Dependencies\Game\B1UI_GSE.Script.dll</HintPath>
+        </Reference>
+        <Reference Include="BtlSvr.Main">
+          <HintPath>..\Dependencies\Game\BtlSvr.Main.dll</HintPath>
+        </Reference>
+        <Reference Include="CoreSound">
+          <HintPath>..\..\CORESound\CoreSound\bin\Release\netstandard2.0\CoreSound.dll</HintPath>
+        </Reference>
         <Reference Include="CSharpModBase">
           <HintPath>..\Dependencies\Loader\CSharpModBase.dll</HintPath>
+        </Reference>
+        <Reference Include="GSE.Core">
+          <HintPath>..\Dependencies\Game\GSE.Core.dll</HintPath>
+        </Reference>
+        <Reference Include="GSE.GSNet">
+          <HintPath>..\Dependencies\Game\GSE.GSNet.dll</HintPath>
+        </Reference>
+        <Reference Include="GSE.GSSdk">
+          <HintPath>..\Dependencies\Game\GSE.GSSdk.dll</HintPath>
+        </Reference>
+        <Reference Include="GSE.OnlineBase">
+          <HintPath>..\Dependencies\Game\GSE.OnlineBase.dll</HintPath>
+        </Reference>
+        <Reference Include="GSE.ProtobufDB">
+          <HintPath>..\Dependencies\Game\GSE.ProtobufDB.dll</HintPath>
         </Reference>
         <Reference Include="LiteNetLib">
           <HintPath>..\Dependencies\Loader\LiteNetLib.dll</HintPath>

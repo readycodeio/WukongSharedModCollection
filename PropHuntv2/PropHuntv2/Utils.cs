@@ -152,6 +152,5 @@ public static class Utils
     public static void test()
     {
         var pawn = WukongApi.Sync.LocalMainCharacter?.Pawn;
-
     }
 }

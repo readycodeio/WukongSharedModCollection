@@ -12,6 +12,10 @@
     {
       "uniqueId": "WukongMp.Coop",
       "minimumVersion": "0.2.1"
+    },
+    {
+      "uniqueId": "BasicSoundCore",
+      "minimumVersion": "1.0.0"
     }
   ]
 }
