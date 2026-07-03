@@ -48,7 +48,6 @@ public partial struct GameConfig : INetSerializable
 
 }
 
-[DeriveINetSerializable]
 public partial struct GameStateSnapshot : INetSerializable
 {
     public bool IsGameActive;
@@ -81,8 +80,69 @@ public partial struct GameStateSnapshot : INetSerializable
         this.ActiveProps = [];
         this.ActiveDecoys = [];
     }
-}
 
+    public void Serialize(NetDataWriter writer)
+    {
+        writer.Put(IsGameActive);
+        writer.Put(HasPreparationEnded);
+        writer.Put(ElapsedRoundTime);
+        writer.Put(CurrentRound);
+        writer.Put(HidersScore);
+        writer.Put(SeekersScore);
+
+        writer.Put(Seekers ?? string.Empty);
+        writer.Put(Hiders ?? string.Empty);
+        writer.Put(Spectators ?? string.Empty);
+
+        writer.Put((ushort)(ActiveProps?.Length ?? 0));
+        if (ActiveProps != null)
+        {
+            for (int i = 0; i < ActiveProps.Length; i++)
+            {
+                ActiveProps[i].Serialize(writer);
+            }
+        }
+
+        writer.Put((ushort)(ActiveDecoys?.Length ?? 0));
+        if (ActiveDecoys != null)
+        {
+            for (int i = 0; i < ActiveDecoys.Length; i++)
+            {
+                ActiveDecoys[i].Serialize(writer);
+            }
+        }
+    }
+
+    public void Deserialize(NetDataReader reader)
+    {
+        IsGameActive = reader.GetBool();
+        HasPreparationEnded = reader.GetBool();
+        ElapsedRoundTime = reader.GetFloat();
+        CurrentRound = reader.GetInt();
+        HidersScore = reader.GetInt();
+        SeekersScore = reader.GetInt();
+
+        Seekers = reader.GetString();
+        Hiders = reader.GetString();
+        Spectators = reader.GetString();
+
+        ushort propsCount = reader.GetUShort();
+        ActiveProps = new PlayerPropNetData[propsCount];
+        for (int i = 0; i < propsCount; i++)
+        {
+            ActiveProps[i] = new PlayerPropNetData();
+            ActiveProps[i].Deserialize(reader);
+        }
+
+        ushort decoysCount = reader.GetUShort();
+        ActiveDecoys = new DecoyNetData[decoysCount];
+        for (int i = 0; i < decoysCount; i++)
+        {
+            ActiveDecoys[i] = new DecoyNetData();
+            ActiveDecoys[i].Deserialize(reader);
+        }
+    }
+}
 [DeriveINetSerializable]
 public partial struct DecoyNetData : INetSerializable
 {
